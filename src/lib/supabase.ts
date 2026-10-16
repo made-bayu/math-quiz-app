@@ -6,7 +6,8 @@ const supabaseUrl = (
   ''
 ).trim().replace(/['"]/g, '');
 
-const supabaseAnonKey = (
+const supabaseKey = (
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   process.env.SUPABASE_ANON_KEY ||
   ''
@@ -14,7 +15,7 @@ const supabaseAnonKey = (
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl && 
-  supabaseAnonKey && 
+  supabaseKey && 
   !supabaseUrl.includes('your-project')
 );
 
@@ -66,5 +67,10 @@ export const inMemoryDB = {
 };
 
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    })
   : null;

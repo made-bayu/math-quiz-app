@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { supabase, isSupabaseConfigured, inMemoryDB, StoredSubmission, StoredAnswerLog } from '@/lib/supabase';
 import { QUIZ_QUESTIONS } from '@/data/questions';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
@@ -8,7 +11,7 @@ export async function POST(request: Request) {
     const {
       sessionId,
       participantName,
-      answers, // Record<string, string> (questionId -> chosen option text / input value)
+      answers,
       timeSpentSeconds,
     } = body;
 
@@ -33,7 +36,6 @@ export async function POST(request: Request) {
           distractorType = `wrong_integer_${userAnswer}`;
         }
       } else {
-        // multiple-choice
         const matchedOption = q.options?.find((opt) => opt.text.trim() === userAnswer.trim());
         if (matchedOption) {
           isCorrect = matchedOption.isCorrect;
@@ -63,60 +65,65 @@ export async function POST(request: Request) {
     const totalQuestions = QUIZ_QUESTIONS.length;
     const percentage = Number(((score / totalQuestions) * 100).toFixed(2));
     const now = new Date().toISOString();
+    const submissionId = crypto.randomUUID();
+
+    let supabaseError: string | null = null;
 
     // 1. If Supabase is configured, insert to PostgreSQL
     if (isSupabaseConfigured && supabase) {
-      const { data: submissionData, error: subError } = await supabase
+      const { error: subError } = await supabase
         .from('quiz_submissions')
         .insert({
+          id: submissionId,
           session_id: sessionId,
           participant_name: participantName || null,
           score,
           total_questions: totalQuestions,
           percentage,
           time_spent_seconds: timeSpentSeconds || 0,
-        })
-        .select()
-        .single();
+        });
 
       if (subError) {
         console.error('Supabase submission insert error:', subError);
-      } else if (submissionData) {
+        supabaseError = subError.message;
+      } else {
         const logsToInsert = answerLogs.map((log) => ({
+          id: crypto.randomUUID(),
           ...log,
-          submission_id: submissionData.id,
+          submission_id: submissionId,
         }));
+
         const { error: logsError } = await supabase
           .from('quiz_answer_logs')
           .insert(logsToInsert);
 
         if (logsError) {
           console.error('Supabase answer logs insert error:', logsError);
+          if (!supabaseError) supabaseError = logsError.message;
         }
       }
-    } else {
-      // 2. Save to In-Memory fallback store
-      const submissionId = `sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-      const submissionRecord: StoredSubmission = {
-        id: submissionId,
-        session_id: sessionId,
-        participant_name: participantName || null,
-        score,
-        total_questions: totalQuestions,
-        percentage,
-        time_spent_seconds: timeSpentSeconds || 0,
-        created_at: now,
-      };
-      inMemoryDB.submissions.push(submissionRecord);
-
-      answerLogs.forEach((log) => {
-        inMemoryDB.answerLogs.push({
-          id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-          submission_id: submissionId,
-          ...log,
-        });
-      });
     }
+
+    // Always mirror to In-Memory fallback store
+    const submissionRecord: StoredSubmission = {
+      id: submissionId,
+      session_id: sessionId,
+      participant_name: participantName || null,
+      score,
+      total_questions: totalQuestions,
+      percentage,
+      time_spent_seconds: timeSpentSeconds || 0,
+      created_at: now,
+    };
+    inMemoryDB.submissions.push(submissionRecord);
+
+    answerLogs.forEach((log) => {
+      inMemoryDB.answerLogs.push({
+        id: crypto.randomUUID(),
+        submission_id: submissionId,
+        ...log,
+      });
+    });
 
     return NextResponse.json({
       success: true,
@@ -124,6 +131,7 @@ export async function POST(request: Request) {
       totalQuestions,
       percentage,
       timeSpentSeconds,
+      supabaseError,
     });
   } catch (error: any) {
     console.error('Submit API error:', error);
