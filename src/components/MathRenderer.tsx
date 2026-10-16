@@ -14,37 +14,70 @@ export const MathRenderer: React.FC<MathRendererProps> = ({ content, block = fal
     if (!content) return '';
 
     try {
-      // If it contains $ or $$, parse segments
-      // Replace $$...$$ with block math, $...$ with inline math
+      const trimmed = content.trim();
+
+      // Case 1: The entire content is a raw LaTeX formula (e.g. starts with \begin, f(x) =, \frac, y =, etc.)
+      const containsLatexCommands = /\\[a-zA-Z]+/.test(trimmed);
+      const hasDollarDelimiters = trimmed.includes('$');
+
+      if (!hasDollarDelimiters && containsLatexCommands) {
+        try {
+          return katex.renderToString(trimmed, {
+            displayMode: block,
+            throwOnError: false,
+            output: 'html',
+          });
+        } catch {
+          // fallback to segmented parsing
+        }
+      }
+
+      // Case 2: Segmented content with $...$ or $$...$$
       const parts = content.split(/(\$\$[\s\S]*?\$\$|\$[^\$]+?\$)/g);
 
-      return parts.map((part) => {
-        if (part.startsWith('$$') && part.endsWith('$$')) {
-          const math = part.slice(2, -2).trim();
-          try {
-            return katex.renderToString(math, { displayMode: true, throwOnError: false });
-          } catch {
-            return part;
+      return parts
+        .map((part) => {
+          if (part.startsWith('$$') && part.endsWith('$$')) {
+            const math = part.slice(2, -2).trim();
+            try {
+              return katex.renderToString(math, {
+                displayMode: true,
+                throwOnError: false,
+                output: 'html',
+              });
+            } catch {
+              return part;
+            }
+          } else if (part.startsWith('$') && part.endsWith('$')) {
+            const math = part.slice(1, -1).trim();
+            try {
+              return katex.renderToString(math, {
+                displayMode: false,
+                throwOnError: false,
+                output: 'html',
+              });
+            } catch {
+              return part;
+            }
           }
-        } else if (part.startsWith('$') && part.endsWith('$')) {
-          const math = part.slice(1, -1).trim();
-          try {
-            return katex.renderToString(math, { displayMode: false, throwOnError: false });
-          } catch {
-            return part;
+
+          // Check if this individual part contains unescaped LaTeX commands
+          if (/\\[a-zA-Z]+/.test(part.trim())) {
+            try {
+              return katex.renderToString(part.trim(), {
+                displayMode: false,
+                throwOnError: false,
+                output: 'html',
+              });
+            } catch {
+              return part.replace(/\n/g, '<br/>');
+            }
           }
-        }
-        // If block=true and string has no $, render as raw KaTeX math expression
-        if (block && !content.includes('$')) {
-          try {
-            return katex.renderToString(content, { displayMode: true, throwOnError: false });
-          } catch {
-            return content;
-          }
-        }
-        // Render regular text with line breaks
-        return part.replace(/\n/g, '<br/>');
-      }).join('');
+
+          // Plain text with line breaks
+          return part.replace(/\n/g, '<br/>');
+        })
+        .join('');
     } catch {
       return content;
     }

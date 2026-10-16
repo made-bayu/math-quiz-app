@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import 'katex/dist/katex.min.css';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -13,14 +14,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
-          integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGExxAU4wnPrtvYcIIxoUUXzHZQvQb"
-          crossOrigin="anonymous"
-        />
-      </head>
       <body className="bg-slate-950 text-slate-100 flex flex-col min-h-screen">
         <main className="flex-1 flex flex-col">{children}</main>
       </body>
