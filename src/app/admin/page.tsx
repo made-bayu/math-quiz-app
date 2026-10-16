@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, RefreshCw, AlertCircle, Database, CheckCircle, XCircle, Lock, KeyRound } from 'lucide-react';
+import { ArrowLeft, RefreshCw, AlertCircle, Database, CheckCircle, XCircle } from 'lucide-react';
 
 interface QuestionStat {
   id: string;
@@ -17,10 +17,6 @@ interface QuestionStat {
 }
 
 export default function AdminAnalyticsPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [pinInput, setPinInput] = useState('');
-  const [pinError, setPinError] = useState(false);
-
   const [data, setData] = useState<{
     isSupabaseConnected: boolean;
     supabaseError?: string | null;
@@ -30,36 +26,7 @@ export default function AdminAnalyticsPage() {
     questionStats: QuestionStat[];
     recentSubmissions: any[];
   } | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  // Check session storage on mount
-  useEffect(() => {
-    const savedAuth = sessionStorage.getItem('admin_authenticated');
-    if (savedAuth === 'true') {
-      setIsAuthenticated(true);
-      fetchStats();
-    }
-  }, []);
-
-  const handlePinSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const targetPin = process.env.NEXT_PUBLIC_ADMIN_PIN || 'kalkulus2026';
-
-    if (pinInput.trim() === targetPin) {
-      sessionStorage.setItem('admin_authenticated', 'true');
-      setIsAuthenticated(true);
-      setPinError(false);
-      fetchStats();
-    } else {
-      setPinError(true);
-    }
-  };
-
-  const handleLogout = () => {
-    sessionStorage.removeItem('admin_authenticated');
-    setIsAuthenticated(false);
-    setData(null);
-  };
+  const [loading, setLoading] = useState(true);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -74,61 +41,9 @@ export default function AdminAnalyticsPage() {
     }
   };
 
-  // If not authenticated, show passcode screen
-  if (!isAuthenticated) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl text-center space-y-6">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto">
-            <Lock className="w-7 h-7" />
-          </div>
-
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white">Protected Analytics Portal</h1>
-            <p className="text-slate-400 text-xs sm:text-sm mt-1">
-              Restricted to authorized instructors. Please enter the passcode to access student results and error data.
-            </p>
-          </div>
-
-          <form onSubmit={handlePinSubmit} className="space-y-4">
-            <div className="relative">
-              <input
-                type="password"
-                value={pinInput}
-                onChange={(e) => {
-                  setPinInput(e.target.value);
-                  setPinError(false);
-                }}
-                placeholder="Enter passcode"
-                autoFocus
-                className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-center text-lg tracking-wider focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-              />
-            </div>
-
-            {pinError && (
-              <p className="text-xs text-rose-400 font-medium">
-                Incorrect passcode. Access denied.
-              </p>
-            )}
-
-            <button
-              type="submit"
-              className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-sm transition shadow-lg shadow-indigo-600/20 cursor-pointer flex items-center justify-center gap-2"
-            >
-              <KeyRound className="w-4 h-4" />
-              Unlock Dashboard
-            </button>
-          </form>
-
-          <div className="text-center pt-2">
-            <Link href="/" className="text-xs text-slate-500 hover:text-slate-400 transition">
-              &larr; Return to Quiz Home
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   return (
     <div className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
@@ -156,13 +71,6 @@ export default function AdminAnalyticsPage() {
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh Data
-          </button>
-
-          <button
-            onClick={handleLogout}
-            className="px-3 py-2 bg-slate-950 border border-slate-800 hover:bg-rose-500/10 hover:border-rose-500/30 text-rose-400 text-xs rounded-xl font-medium transition cursor-pointer"
-          >
-            Lock Dashboard
           </button>
         </div>
       </div>
