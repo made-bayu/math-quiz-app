@@ -17,7 +17,7 @@ function shuffleArray<T>(array: T[]): T[] {
   return arr;
 }
 
-const TOTAL_QUIZ_TIME_SECONDS = 360; // 6 minutes
+const TOTAL_QUIZ_TIME_SECONDS = 600; // 10 minutes
 
 export default function QuizPage() {
   const [quizState, setQuizState] = useState<'home' | 'active' | 'completed'>('home');
@@ -215,9 +215,9 @@ export default function QuizPage() {
             <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80">
               <Clock className="w-6 h-6 text-amber-400 shrink-0 mt-0.5" />
               <div>
-                <h2 className="font-semibold text-sm text-slate-200">Strict 6-Minute Timer</h2>
+                <h2 className="font-semibold text-sm text-slate-200">Strict 10-Minute Timer</h2>
                 <p className="text-xs text-slate-400 mt-1">
-                  You have exactly 6:00 minutes to complete 7 questions. The quiz auto-submits when time expires.
+                  You have exactly 10:00 minutes to complete 7 questions. The quiz auto-submits when time expires.
                 </p>
               </div>
             </div>

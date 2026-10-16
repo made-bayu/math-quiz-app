@@ -129,7 +129,7 @@ export default function AdminAnalyticsPage() {
             <div className="text-3xl font-extrabold text-white mt-2">
               {Math.floor(data.avgTime / 60)}m {data.avgTime % 60}s
             </div>
-            <div className="text-xs text-slate-500 mt-1">Out of 6:00 minutes allowed</div>
+            <div className="text-xs text-slate-500 mt-1">Out of 10:00 minutes allowed</div>
           </div>
         </div>
       )}
