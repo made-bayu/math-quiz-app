@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { MathRenderer } from '@/components/MathRenderer';
 import { QUIZ_QUESTIONS, Question, QuestionOption } from '@/data/questions';
-import { Clock, ShieldAlert, Award, ArrowRight, CheckCircle2, BarChart2 } from 'lucide-react';
+import { Clock, ShieldAlert, Award, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 // Fisher-Yates shuffle helper
 function shuffleArray<T>(array: T[]): T[] {
@@ -249,7 +249,7 @@ export default function QuizPage() {
           </div>
 
           {/* Actions */}
-          <div className="space-y-3">
+          <div>
             <button
               onClick={handleStartQuiz}
               className="w-full py-4 px-6 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] transition shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 text-base cursor-pointer"
@@ -257,16 +257,6 @@ export default function QuizPage() {
               Start Quiz Now
               <ArrowRight className="w-5 h-5" />
             </button>
-
-            <div className="text-center">
-              <Link
-                href="/admin"
-                className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-400 transition"
-              >
-                <BarChart2 className="w-3.5 h-3.5" />
-                View Analytics & Wrong Answers Dashboard
-              </Link>
-            </div>
           </div>
         </div>
       </div>
@@ -393,7 +383,7 @@ export default function QuizPage() {
                     step="1"
                     value={integerInput}
                     onChange={(e) => setIntegerInput(e.target.value)}
-                    placeholder="Contoh: 6 atau 1"
+                    placeholder="Ketik angka bulat di sini..."
                     autoFocus
                     className="w-full px-5 py-3.5 bg-slate-950 border border-slate-700 rounded-xl text-2xl font-mono text-center text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                   />
@@ -512,16 +502,6 @@ export default function QuizPage() {
 
         <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 leading-relaxed">
           <span className="font-semibold text-slate-300">Policy Note:</span> In accordance with the quiz rules, review and modification of past answers are closed.
-        </div>
-
-        <div className="pt-2 space-y-3">
-          <Link
-            href="/admin"
-            className="w-full py-3.5 px-6 rounded-xl font-semibold text-white bg-slate-800 hover:bg-slate-700 transition flex items-center justify-center gap-2 text-sm border border-slate-700"
-          >
-            <BarChart2 className="w-4 h-4 text-indigo-400" />
-            View Aggregated Analytics & Wrong Answers
-          </Link>
         </div>
       </div>
     </div>
