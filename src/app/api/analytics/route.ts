@@ -3,21 +3,24 @@ import { supabase, isSupabaseConfigured, inMemoryDB } from '@/lib/supabase';
 import { QUIZ_QUESTIONS } from '@/data/questions';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET() {
   try {
     let submissions: any[] = [];
     let answerLogs: any[] = [];
     let supabaseError: string | null = null;
+    let subErrorMsg: string | null = null;
+    let logErrorMsg: string | null = null;
 
     if (isSupabaseConfigured && supabase) {
       const { data: subData, error: subError } = await supabase
         .from('quiz_submissions')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
 
       if (subError) {
         console.error('Supabase fetch submissions error:', subError);
+        subErrorMsg = subError.message;
         supabaseError = subError.message;
       } else {
         submissions = subData || [];
@@ -29,6 +32,7 @@ export async function GET() {
 
       if (logError) {
         console.error('Supabase fetch answer logs error:', logError);
+        logErrorMsg = logError.message;
         if (!supabaseError) supabaseError = logError.message;
       } else {
         answerLogs = logData || [];
@@ -38,12 +42,19 @@ export async function GET() {
       answerLogs = [...inMemoryDB.answerLogs];
     }
 
+    // Sort submissions descending by created_at in JavaScript safely
+    submissions.sort((a, b) => {
+      const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return timeB - timeA;
+    });
+
     const totalSubmissions = submissions.length;
     const avgScore = totalSubmissions > 0
-      ? (submissions.reduce((acc, s) => acc + s.score, 0) / totalSubmissions).toFixed(1)
+      ? (submissions.reduce((acc, s) => acc + (Number(s.score) || 0), 0) / totalSubmissions).toFixed(1)
       : '0';
     const avgTime = totalSubmissions > 0
-      ? Math.round(submissions.reduce((acc, s) => acc + (s.time_spent_seconds || 0), 0) / totalSubmissions)
+      ? Math.round(submissions.reduce((acc, s) => acc + (Number(s.time_spent_seconds) || 0), 0) / totalSubmissions)
       : 0;
 
     // Per question statistics
@@ -79,6 +90,10 @@ export async function GET() {
     return NextResponse.json({
       isSupabaseConnected: isSupabaseConfigured,
       supabaseError,
+      subErrorMsg,
+      logErrorMsg,
+      rawSubmissionCount: submissions.length,
+      rawLogCount: answerLogs.length,
       totalSubmissions,
       avgScore,
       avgTime,
