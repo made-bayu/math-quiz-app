@@ -8,19 +8,31 @@ export async function GET() {
   try {
     let submissions: any[] = [];
     let answerLogs: any[] = [];
+    let supabaseError: string | null = null;
 
     if (isSupabaseConfigured && supabase) {
-      const { data: subData } = await supabase
+      const { data: subData, error: subError } = await supabase
         .from('quiz_submissions')
         .select('*')
         .order('created_at', { ascending: false });
 
-      const { data: logData } = await supabase
+      if (subError) {
+        console.error('Supabase fetch submissions error:', subError);
+        supabaseError = subError.message;
+      } else {
+        submissions = subData || [];
+      }
+
+      const { data: logData, error: logError } = await supabase
         .from('quiz_answer_logs')
         .select('*');
 
-      submissions = subData || [];
-      answerLogs = logData || [];
+      if (logError) {
+        console.error('Supabase fetch answer logs error:', logError);
+        if (!supabaseError) supabaseError = logError.message;
+      } else {
+        answerLogs = logData || [];
+      }
     } else {
       submissions = [...inMemoryDB.submissions];
       answerLogs = [...inMemoryDB.answerLogs];
@@ -66,6 +78,7 @@ export async function GET() {
 
     return NextResponse.json({
       isSupabaseConnected: isSupabaseConfigured,
+      supabaseError,
       totalSubmissions,
       avgScore,
       avgTime,

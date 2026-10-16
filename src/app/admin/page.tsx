@@ -23,6 +23,7 @@ export default function AdminAnalyticsPage() {
 
   const [data, setData] = useState<{
     isSupabaseConnected: boolean;
+    supabaseError?: string | null;
     totalSubmissions: number;
     avgScore: string;
     avgTime: number;
@@ -169,8 +170,10 @@ export default function AdminAnalyticsPage() {
       {/* Database Connection Status Banner */}
       {data && (
         <div
-          className={`p-4 rounded-xl border flex items-center justify-between text-sm ${
-            data.isSupabaseConnected
+          className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm ${
+            data.supabaseError
+              ? 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+              : data.isSupabaseConnected
               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
               : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
           }`}
@@ -178,7 +181,11 @@ export default function AdminAnalyticsPage() {
           <div className="flex items-center gap-2.5">
             <Database className="w-5 h-5 shrink-0" />
             <span>
-              {data.isSupabaseConnected ? (
+              {data.supabaseError ? (
+                <>
+                  <strong className="font-semibold">Supabase Connected, but Table Error:</strong> {data.supabaseError}. Did you run the SQL script in Supabase SQL Editor?
+                </>
+              ) : data.isSupabaseConnected ? (
                 <>
                   <strong className="font-semibold">Supabase Connected:</strong> Submissions and error logs are persisting directly to PostgreSQL.
                 </>
